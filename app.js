@@ -117,6 +117,19 @@
   }
   document.addEventListener("keydown", (e) => e.key === "Escape" && $("#modal-root .overlay") && closeModal());
 
+  // Number boxes (PIN, OTP, phone, amount) accept digits only — letters are removed as you type
+  document.addEventListener("input", (e) => {
+    const el = e.target;
+    if (el.matches && el.matches('input[inputmode="numeric"]')) {
+      const clean = el.value.replace(/\D/g, "");
+      if (clean !== el.value) el.value = clean;
+    }
+  });
+  document.addEventListener("beforeinput", (e) => {
+    const el = e.target;
+    if (el.matches && el.matches('input[inputmode="numeric"]') && e.data && /\D/.test(e.data)) e.preventDefault();
+  });
+
   window.addEventListener("db-error", (e) => {
     console.error(e.detail);
     toast("Database error — check Firebase setup and rules.");
@@ -733,7 +746,7 @@
         const amount = Number(raw);
         if (!raw || !Number.isInteger(amount) || amount <= 0) return (err.textContent = "Enter a whole amount above 0.");
         if (amount > 1e12) return (err.textContent = "That amount is too big.");
-        if (!me.company && amount > balanceOf(me.id)) return (err.textContent = "No balance.");
+        if (!me.company && amount > balanceOf(me.id)) return (err.textContent = "Not enough money.");
         P.amount = String(amount);
         P.note = $("#note", m).value.trim();
         P.step = "pin";
@@ -778,7 +791,7 @@
           console.error(ex);
           btn.disabled = false;
           btn.textContent = `Pay ${fmt(amount)}`;
-          err.textContent = ex.message === "NO_BALANCE" ? "No balance." : "Payment failed. Try again.";
+          err.textContent = ex.message === "NO_BALANCE" ? "Not enough money." : "Payment failed. Try again.";
         }
       };
     }

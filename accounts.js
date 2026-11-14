@@ -19,7 +19,7 @@ window.ACCOUNTS = [
     pinHash: "8f7df2789050bf50c42dfe912031c5543d9b33433e509bdf3a5f918bf7c81302",
   },
   {
-    id: "aaron", name: "Aaron Joseph", phone: "776073825", photo: null,
+    id: "aaron", name: "Aaron Joseph", phone: "776073825", photo: "images/aaron.jpg",
     pinHash: "1d1e0d947a6880f8dbb0c95c1c0be3c4b5ba4de28680dfd02c297aacb6f33133",
   },
 ];
