@@ -20,6 +20,7 @@ window.DB = (() => {
         return { id: ref.id, ...obj };
       },
       async pay({ from, to, amount, ...rest }) {
+        if (from === to) throw new Error("SELF_PAY");
         const txRef = fs.collection("transactions").doc();
         const tx = { from, to, amount, ...rest, ts: Date.now() };
         await fs.runTransaction(async (t) => {
@@ -78,6 +79,7 @@ window.DB = (() => {
       return doc;
     },
     async pay({ from, to, amount, ...rest }) {
+      if (from === to) throw new Error("SELF_PAY");
       const db = load();
       if (from !== "abm") {
         const bal = db.accounts[from]?.balance || 0;

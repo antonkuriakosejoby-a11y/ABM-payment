@@ -17,7 +17,8 @@ service cloud.firestore {
     match /transactions/{id} {
       allow read: if true;
       allow create: if request.resource.data.amount is number
-        && request.resource.data.amount > 0;
+        && request.resource.data.amount > 0
+        && request.resource.data.from != request.resource.data.to;
       // history can never be edited or deleted
     }
 

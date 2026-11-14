@@ -280,7 +280,8 @@
       const to = pendingPayTo;
       pendingPayTo = null;
       try { history.replaceState(null, "", location.pathname); } catch { /* file:// */ }
-      if (to !== acc.id) openPay(to);
+      if (to === acc.id) selfPayWarning();
+      else openPay(to);
     }
   }
 
@@ -672,8 +673,19 @@
   // ============================================================
   let P = null;
 
+  function selfPayWarning() {
+    modal(`
+      <div style="text-align:center;padding:10px 0">
+        <div style="font-size:48px">🚫</div>
+        <h3 style="padding:0;margin:10px 0 6px">You can't pay yourself</h3>
+        <p class="muted">This is your own QR code. Scan someone else's QR code to pay them.</p>
+        <button class="btn primary block" id="okSelf">OK</button>
+      </div>`);
+    $("#okSelf").onclick = closeModal;
+  }
+
   function openPay(toId = null, opts = {}) {
-    if (toId === S.user.id) toId = null;
+    if (toId === S.user.id) return selfPayWarning();
     P = { to: toId, amount: "", note: "", purpose: opts.purpose || null, step: toId ? "amount" : "to" };
     renderPay();
   }
@@ -703,6 +715,7 @@
         const digits = $("#num", m).value.replace(/\D/g, "");
         const acc = others.find((a) => a.phone && a.phone === digits);
         if (!digits) return ($("#payErr", m).textContent = "Enter a phone number.");
+        if (me.phone && digits === me.phone) return ($("#payErr", m).textContent = "You can't pay yourself.");
         if (!acc) return ($("#payErr", m).textContent = "No account with this number.");
         P.to = acc.id; P.step = "amount"; renderPay();
       };
@@ -799,7 +812,7 @@
           console.error(ex);
           btn.disabled = false;
           btn.textContent = `Pay ${fmt(amount)}`;
-          err.textContent = ex.message === "NO_BALANCE" ? "Not enough money." : "Payment failed. Try again.";
+          err.textContent = ex.message === "NO_BALANCE" ? "Not enough money." : ex.message === "SELF_PAY" ? "You can't pay yourself." : "Payment failed. Try again.";
         }
       };
     }
