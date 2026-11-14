@@ -1,0 +1,35 @@
+rules_version = '2';
+
+// Basic rules for ABM Payment Management.
+// NOTE: the site has no server, so these rules can only block obviously bad data
+// (deleting history, negative balances). See README "Security" section.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /accounts/{id} {
+      allow read: if true;
+      allow create, update: if id in ['joby', 'anna', 'asha', 'aaron']
+        && request.resource.data.keys().hasOnly(['balance'])
+        && request.resource.data.balance is number
+        && request.resource.data.balance >= 0;
+    }
+
+    match /transactions/{id} {
+      allow read: if true;
+      allow create: if request.resource.data.amount is number
+        && request.resource.data.amount > 0;
+      // history can never be edited or deleted
+    }
+
+    match /messages/{id} {
+      allow read: if true;
+      allow create: if request.resource.data.text is string
+        && request.resource.data.text.size() <= 1000;
+    }
+
+    match /reminders/{id} {
+      allow read: if true;
+      allow create: if request.resource.data.from == 'abm';
+    }
+  }
+}
