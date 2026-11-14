@@ -15,9 +15,9 @@ window.CONFIG = {
   },
 
   emailjs: {
-    publicKey: "YOUR_PUBLIC_KEY",
-    serviceId: "YOUR_SERVICE_ID",
-    templateId: "YOUR_TEMPLATE_ID",
+    publicKey: "LjhvzIj61Xk8HL7LP",
+    serviceId: "service_h2dydqp",
+    templateId: "template_oeak9un",
   },
 
   // ABM account login OTP is sent here

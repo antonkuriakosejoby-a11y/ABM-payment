@@ -198,7 +198,12 @@
     await emailjs.send(
       C.emailjs.serviceId,
       C.emailjs.templateId,
-      { to_email: C.OTP_EMAIL, otp_code: code, expires_in: `${C.OTP_MINUTES} minutes` },
+      {
+        to_email: C.OTP_EMAIL,
+        otp_code: code,
+        expires_in: `${C.OTP_MINUTES} minutes`,
+        time: new Date().toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" }),
+      },
       { publicKey: C.emailjs.publicKey }
     );
     return null;
