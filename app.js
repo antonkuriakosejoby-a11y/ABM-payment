@@ -114,6 +114,10 @@
   function closeModal() {
     $("#modal-root").innerHTML = "";
     P = null;
+    if (S.quick) {           // finished a QR payment → back to the start page
+      S.quick = false;
+      renderLogin();
+    }
   }
   document.addEventListener("keydown", (e) => e.key === "Escape" && $("#modal-root .overlay") && closeModal());
 
@@ -864,5 +868,93 @@
   }
 
   // ============================================================
-  renderLogin();
+  //  QR pay page — opened by scanning someone's QR code.
+  //  No login needed: the PIN typed here tells us who is paying.
+  // ============================================================
+  function renderQrPay(toId) {
+    const to = byId[toId];
+    const clearLink = () => {
+      pendingPayTo = null;
+      try { history.replaceState(null, "", location.pathname); } catch { /* file:// */ }
+    };
+    let purpose = to.company ? "fees" : "other";
+    $("#app").innerHTML = `
+      <div class="login-wrap"><div class="login">
+        <img class="login-logo" style="width:120px" src="images/abm-logo.png" alt="ABM">
+        <div class="muted small" style="font-weight:700;letter-spacing:.5px">PAYING</div>
+        <div style="margin:12px auto">${avatar(to, "lg")}</div>
+        <h1 style="margin:0 0 4px">${esc(to.name)}</h1>
+        <p class="muted" style="margin:0 0 18px">${to.phone ? "📞 " + esc(to.phone) : "Company account"}</p>
+        <form id="qrPayForm" autocomplete="off" style="text-align:left">
+          <div class="field"><label for="qAmt">How much to pay? (${CUR} Aurex)</label>
+            <input class="input amount-input" id="qAmt" inputmode="numeric" placeholder="${CUR} 0" value="${to.company ? FEE : ""}"></div>
+          ${to.company ? `<div class="field"><label>Paying for</label><div class="chips" id="qChips">
+            <button type="button" class="chip on" data-p="fees">Fees</button>
+            <button type="button" class="chip" data-p="other">Other</button></div></div>` : ""}
+          <div class="field"><label for="qNote">Message</label>
+            <input class="input" id="qNote" maxlength="120" placeholder="${to.company ? "e.g. For fees" : "Add a message"}"></div>
+          <div class="field" style="text-align:center"><label for="qPin">Enter your PIN</label>
+            <input class="input pin-input" id="qPin" type="password" inputmode="numeric" maxlength="4"></div>
+          <button class="btn primary big block" id="qBtn">Pay</button>
+          <p class="err" id="qErr" style="text-align:center"></p>
+        </form>
+        <button class="btn ghost small" id="qLogin" style="margin-top:6px">Log in instead</button>
+      </div></div>`;
+    $("#qAmt").focus();
+    const chips = $("#qChips");
+    if (chips) chips.onclick = (e) => {
+      const c = e.target.closest("[data-p]");
+      if (!c) return;
+      purpose = c.dataset.p;
+      $$(".chip", chips).forEach((x) => x.classList.toggle("on", x === c));
+      if (purpose === "fees" && !$("#qAmt").value) $("#qAmt").value = FEE;
+    };
+    $("#qLogin").onclick = () => { clearLink(); renderLogin(); };
+    $("#qrPayForm").onsubmit = async (e) => {
+      e.preventDefault();
+      const err = $("#qErr"), btn = $("#qBtn");
+      err.textContent = "";
+      const amount = Number($("#qAmt").value);
+      const pin = $("#qPin").value.trim();
+      if (!Number.isInteger(amount) || amount <= 0) return (err.textContent = "Enter how much to pay.");
+      if (Date.now() < lockUntil) return (err.textContent = `Too many tries. Wait ${Math.ceil((lockUntil - Date.now()) / 1000)}s.`);
+      if (!/^\d{4}$/.test(pin)) return (err.textContent = "Enter your 4-digit PIN.");
+      const payer = await findByPin(pin);
+      if (!payer) {
+        fails++;
+        if (fails >= 5) { lockUntil = Date.now() + 30000; fails = 0; }
+        $("#qPin").value = "";
+        return (err.textContent = "Wrong PIN.");
+      }
+      fails = 0;
+      if (payer.id === to.id) return (err.textContent = "You can't pay yourself.");
+      btn.disabled = true;
+      btn.textContent = "Paying…";
+      try {
+        const p = payer.company || !to.company ? "other" : purpose;
+        const tx = await DB.pay({
+          from: payer.id,
+          to: to.id,
+          amount,
+          purpose: p,
+          note: $("#qNote").value.trim(),
+          feePeriod: p === "fees" ? feePeriod().key : null,
+          month: monthInfo().key,
+        });
+        clearLink();
+        S.user = payer;
+        S.quick = true;
+        showReceipt(tx, true);
+      } catch (ex) {
+        console.error(ex);
+        btn.disabled = false;
+        btn.textContent = "Pay";
+        err.textContent = ex.message === "NO_BALANCE" ? "Not enough money." : "Payment failed. Try again.";
+      }
+    };
+  }
+
+  // ============================================================
+  if (pendingPayTo) renderQrPay(pendingPayTo);
+  else renderLogin();
 })();
