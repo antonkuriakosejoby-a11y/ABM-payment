@@ -6,12 +6,12 @@
 // ============================================================
 window.CONFIG = {
   firebase: {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    projectId: "YOUR_PROJECT",
-    storageBucket: "YOUR_PROJECT.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID",
+    apiKey: "AIzaSyCsHaYLzDWLA51bePDVh6-MiX3jZIV5FOg",
+    authDomain: "abm-project-225a9.firebaseapp.com",
+    projectId: "abm-project-225a9",
+    storageBucket: "abm-project-225a9.firebasestorage.app",
+    messagingSenderId: "28085950990",
+    appId: "1:28085950990:web:40b11a481ed6e5d699ba5f",
   },
 
   emailjs: {
