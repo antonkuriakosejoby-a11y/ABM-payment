@@ -200,7 +200,10 @@
       C.emailjs.templateId,
       {
         to_email: C.OTP_EMAIL,
+        email: C.OTP_EMAIL,       // name used by EmailJS's One-Time Password template
+        user_email: C.OTP_EMAIL,
         otp_code: code,
+        passcode: code,
         expires_in: `${C.OTP_MINUTES} minutes`,
         time: new Date().toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" }),
       },
